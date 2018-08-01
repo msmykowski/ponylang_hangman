@@ -44,7 +44,7 @@ class Connection is TCPConnectionNotify
     end
 
     let letter: String val = String.from_iso_array(consume data).>strip()
-    _game.guess_letter(letter)
+    _game.guess_letter(letter, conn)
     true
 
   fun ref connect_failed(conn: TCPConnection ref) =>
@@ -55,14 +55,17 @@ actor Game
   let word: String = "abc"
   let guesses: Set[String] = guesses.create()
 
-
   be add_connection(conn: TCPConnection) =>
     connections.push(conn)
 
-  be guess_letter(guess: String) =>
+  be guess_letter(guess: String, conn: TCPConnection) =>
+    if guesses.contains(guess) then
+      conn.write("Has already been guessed: " + guess)
+      return
+    end
+
     guesses.set(guess)
-    let contains = word.contains(guess)
-    if contains then
+    if word.contains(guess) then
       for connection in connections.values() do
         connection.write(word)
       end
